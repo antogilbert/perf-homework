@@ -1,8 +1,13 @@
 add_executable(soa soa.cpp)
-target_link_libraries(soa benchmark::benchmark benchmark::benchmark_main)
+# target_link_libraries(soa benchmark::benchmark benchmark::benchmark_main)
 
 add_executable(soa_struct soa_struct.cpp)
-target_link_libraries(soa_struct benchmark::benchmark benchmark::benchmark_main)
+# target_link_libraries(soa_struct benchmark::benchmark benchmark::benchmark_main)
 
 add_executable(aos aos.cpp)
-target_link_libraries(aos benchmark::benchmark benchmark::benchmark_main)
+# target_link_libraries(aos benchmark::benchmark benchmark::benchmark_main)
+
+add_executable(soa_avx soa_avx.cpp)
+add_executable(soa_arr_avx soa_arr_avx.cpp)
+target_compile_options(soa_avx PRIVATE -mavx2)
+target_compile_options(soa_arr_avx PRIVATE -mavx2)

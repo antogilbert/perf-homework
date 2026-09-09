@@ -1,4 +1,4 @@
-#include <benchmark/benchmark.h>
+// #include <benchmark/benchmark.h>
 
 #include <random>
 #include <vector>
@@ -14,7 +14,7 @@ void dot_product(std::vector<float> &xs, std::vector<float> &ys,
 }
 } // namespace soa_struct
 
-int old_main() {
+int main() {
 
   std::random_device dev;
   std::mt19937 rng(dev());
@@ -37,6 +37,7 @@ int old_main() {
   return 0;
 }
 
+/*
 static void BM_soa_struct_dot_prod(benchmark::State &state) {
   std::random_device dev;
   std::mt19937 rng(dev());
@@ -65,3 +66,4 @@ static void BM_soa_struct_dot_prod(benchmark::State &state) {
 BENCHMARK(BM_soa_struct_dot_prod);
 // Run the benchmark
 BENCHMARK_MAIN();
+*/

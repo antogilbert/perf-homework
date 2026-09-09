@@ -1,0 +1,20 @@
+# started on Wed Sep  9 23:41:50 2026
+
+
+ Performance counter stats for './build/dot_product/soa':
+
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
+             1,206      page-faults:u                    #  12367.1 faults/sec  page_faults_per_second
+             97.52 msec task-clock:u                     #      nan CPUs  CPUs_utilized       
+            80,710      branch-misses:u                  #      0.1 %  branch_miss_rate         (49.29%)
+        70,080,518      branches:u                       #    718.7 M/sec  branch_frequency     (50.23%)
+       285,980,044      cpu-cycles:u                     #      2.9 GHz  cycles_frequency       (51.07%)
+       795,328,464      instructions:u                   #      2.7 instructions  insn_per_cycle  (50.71%)
+
+       0.098569441 seconds time elapsed
+
+       0.088753000 seconds user
+       0.007738000 seconds sys
+
+

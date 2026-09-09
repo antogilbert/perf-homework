@@ -1,0 +1,20 @@
+# started on Wed Sep  9 23:42:39 2026
+
+
+ Performance counter stats for './build/dot_product/soa_arr_avx':
+
+                 0      context-switches:u               #      0.0 cs/sec  cs_per_second     
+                 0      cpu-migrations:u                 #      0.0 migrations/sec  migrations_per_second
+             1,205      page-faults:u                    #  13369.4 faults/sec  page_faults_per_second
+             90.13 msec task-clock:u                     #      nan CPUs  CPUs_utilized       
+            82,607      branch-misses:u                  #      0.1 %  branch_miss_rate         (49.14%)
+        63,622,419      branches:u                       #    705.9 M/sec  branch_frequency     (50.28%)
+       259,879,888      cpu-cycles:u                     #      2.9 GHz  cycles_frequency       (51.05%)
+       613,379,435      instructions:u                   #      2.3 instructions  insn_per_cycle  (50.86%)
+
+       0.091707223 seconds time elapsed
+
+       0.079045000 seconds user
+       0.009632000 seconds sys
+
+
