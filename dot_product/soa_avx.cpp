@@ -16,7 +16,7 @@ namespace soa_avx {
 void dot_product(const Points &points, std::vector<float> &ans) {
   const size_t elems = points.xs.size();
 
-  for (size_t i = 0; i < elems - AVX_BLOCK; i += AVX_BLOCK) {
+  for (size_t i = 0; i < elems; i += AVX_BLOCK) {
     __m256 xs = _mm256_loadu_ps(&points.xs[i]);
     __m256 ys = _mm256_loadu_ps(&points.ys[i]);
 
