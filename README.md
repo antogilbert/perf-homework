@@ -10,4 +10,18 @@ is the num of bits) look at intrinsics
 I needed to use the `u` variant of both load and store because i couldn't 
 guarantee 32 byte alignment.
 
+##
+perf record -g
 
+the sample was probably too small so everything was inlined
+
+let's put all together in gbench or quick-bench.com and re run it
+
+use aligned_alloc next time and do not use the 'u' version of the calls
+
+### FUCK YOU MOMENTS
+aligned_alloc's alignment parameter is in BITS
+intrinsincs load/store's alignment is in BYTES
+
+Setting up variable size in benchmark with the difference above,
+Off by one block
