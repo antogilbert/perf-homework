@@ -1,0 +1,53 @@
+#include <array>
+#include <benchmark/benchmark.h>
+#include <cstddef>
+
+struct frame {
+  size_t len;
+  std::byte *data;
+};
+
+/*
+ *
+ * |  |  |  |  |  |
+ *
+ */
+
+template <size_t CAP> struct spscq {
+  frame read() {
+    return frame{.len = _pos[_readWM], .data = _data[_pos[_readWM]]};
+  };
+  void write(frame &&f) {};
+  void commit_read() { ++_readWM; };
+
+private:
+  size_t read_frame_len() {
+    auto prev = _readWM == 0 ? _pos.back() : _pos[_readWM - 1];
+    auto curr = _pos[_readWM];
+    return curr - prev;
+  }
+  size_t _readWM{0};
+  size_t _writeWM{0};
+  std::array<std::byte, CAP> _data;
+  std::array<size_t, CAP / 20> _pos{};
+};
+
+static void BM_spsc(benchmark::State &state) {
+  for (auto _ : state) {
+    // benchmark::DoNotOptimize(ans.data());
+    benchmark::ClobberMemory();
+  }
+}
+
+BENCHMARK(BM_spsc)
+    ->Arg(1 << 12)
+    ->Arg(1 << 14)
+    ->Arg(1 << 16)
+    ->Arg(1 << 18)
+    ->Arg(1 << 20)
+    ->Arg(1 << 22)
+    ->Arg(1 << 24)
+    ->Arg(1 << 26);
+
+// Run the benchmark
+BENCHMARK_MAIN();

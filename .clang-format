@@ -1,0 +1,13 @@
+BasedOnStyle: Google
+Language: Cpp
+Standard: Cpp11
+BreakTemplateDeclaration: Yes
+ColumnLimit: 100
+AllowShortBlocksOnASingleLine: true
+AllowShortCompoundRequirementOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLambdasOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+AllowShortRecordOnASingleLine: true
+

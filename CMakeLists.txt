@@ -10,4 +10,5 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -fno-omit-frame-pointer -g")
 
-add_subdirectory(dot_product)
+add_subdirectory(spsc)
+# add_subdirectory(dot_product)
