@@ -10,15 +10,14 @@ using Bytes = std::vector<std::byte>;
 
 struct Data {
   size_t len;
-  std::byte *data;
+  std::byte* data;
 };
 
 struct Frame {
   Frame() = delete;
-  Frame(size_t len, std::byte *data)
-      : data_len(len), wrap_len(0), data(data), data_wrap(nullptr) {}
+  Frame(size_t len, std::byte* data) : data_len(len), wrap_len(0), data(data), data_wrap(nullptr) {}
 
-  void wrap_around(size_t len, std::byte *wrap) {
+  void wrap_around(size_t len, std::byte* wrap) {
     data_wrap = wrap;
     wrap_len = len;
   }
@@ -26,33 +25,28 @@ struct Frame {
   Bytes copy() {
     Bytes b(data_len + wrap_len);
 
-    for (int i = 0; i < data_len; ++i) {
-      b[i] = data[i];
-    }
+    for (int i = 0; i < data_len; ++i) { b[i] = data[i]; }
 
-    for (int i = 0; i < wrap_len; ++i) {
-      b[data_len + i] = data_wrap[i];
-    }
+    for (int i = 0; i < wrap_len; ++i) { b[data_len + i] = data_wrap[i]; }
 
     return b;
   }
 
-private:
+ private:
   size_t data_len;
   size_t wrap_len;
-  std::byte *data;
-  std::byte *data_wrap;
+  std::byte* data;
+  std::byte* data_wrap;
 };
 
-void print_bytes(const Bytes &bs) {
+void print_bytes(const Bytes& bs) {
   std::print("BYTES: ");
-  for (auto b : bs) {
-    std::print("{}", static_cast<char>(b));
-  }
+  for (auto b : bs) { std::print("{}", static_cast<char>(b)); }
   std::println();
 }
 
-template <size_t CAP, size_t MIN> struct spscq {
+template <size_t CAP, size_t MIN>
+struct spscq {
   static_assert(CAP % MIN == 0);
 
   Frame read() {
@@ -63,14 +57,14 @@ template <size_t CAP, size_t MIN> struct spscq {
       auto len = frame_end - frame_start;
       // std::println("NORMAL read {} start {} len {} pos read {}", _readWM,
       // frame_start, len, _pos[_readWM]);
-      auto *data = static_cast<std::byte *>(&_data[frame_start]);
+      auto* data = static_cast<std::byte*>(&_data[frame_start]);
       return Frame(len, data);
     }
 
     auto data_len = _data.size() - frame_start;
     auto wrap_len = frame_end;
-    auto *data = static_cast<std::byte *>(&_data[frame_start]);
-    auto *data_wrap = static_cast<std::byte *>(&_data[0]);
+    auto* data = static_cast<std::byte*>(&_data[frame_start]);
+    auto* data_wrap = static_cast<std::byte*>(&_data[0]);
     // std::println(
     // "SPLIT CAP {} data_len {} wrap_len {} frame_start {} frame_end {}", CAP,
     // data_len, wrap_len, frame_start, frame_end);
@@ -113,18 +107,14 @@ template <size_t CAP, size_t MIN> struct spscq {
       return;
     }
 
-    if (_readWM == _pos.size()) {
-      _readWM = 0;
-    }
+    if (_readWM == _pos.size()) { _readWM = 0; }
 
     // std::println("Committed read: R {} W {}", _readWM, _writeWM);
   };
 
   void print() {
     std::print("SPSCQ DATA: '");
-    for (auto b : _data) {
-      std::print("{}", static_cast<char>(b));
-    }
+    for (auto b : _data) { std::print("{}", static_cast<char>(b)); }
     std::print("'");
     std::println();
   };
@@ -132,7 +122,7 @@ template <size_t CAP, size_t MIN> struct spscq {
   size_t readWatermark() { return _readWM; }
   size_t writeWatermark() { return _writeWM; }
 
-private:
+ private:
   size_t _readWM{0};
   size_t _writeWM{0};
   std::array<std::byte, CAP> _data;
