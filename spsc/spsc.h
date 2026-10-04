@@ -1,12 +1,9 @@
-#include <array>
 #include <cstddef>
 #include <cstring>
-#include <iostream>
 #include <print>
 #include <vector>
 
 using Bytes = std::vector<std::byte>;
-
 void print_bytes(const Bytes& bs);
 
 struct Data {
