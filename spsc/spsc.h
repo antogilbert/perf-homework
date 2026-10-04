@@ -1,5 +1,4 @@
 #include <array>
-// #include <benchmark/benchmark.h>
 #include <cstddef>
 #include <cstring>
 #include <iostream>
@@ -8,9 +7,11 @@
 
 using Bytes = std::vector<std::byte>;
 
+void print_bytes(const Bytes& bs);
+
 struct Data {
   size_t len;
-  std::byte* data;
+  const std::byte* data;
 };
 
 struct Frame {
@@ -39,15 +40,10 @@ struct Frame {
   std::byte* data_wrap;
 };
 
-void print_bytes(const Bytes& bs) {
-  std::print("BYTES: ");
-  for (auto b : bs) { std::print("{}", static_cast<char>(b)); }
-  std::println();
-}
-
 template <size_t CAP, size_t MIN>
 struct spscq {
   static_assert(CAP % MIN == 0);
+  explicit spscq() : _data(CAP), _pos(CAP / MIN) {}
 
   Frame read() {
     auto frame_start = _readWM == 0 ? _pos.back() : _pos[_readWM - 1];
@@ -73,6 +69,8 @@ struct spscq {
     return f;
   }
 
+  // TODO: Handle the case in which the write WM loops back to the readWM
+  // or let it overwrite?
   void write(Data f) {
     auto frame_start = _writeWM == 0 ? _pos.back() : _pos[_writeWM - 1];
     auto remaining = _data.size() - frame_start;
@@ -93,6 +91,7 @@ struct spscq {
     }
 
     ++_writeWM;
+    if (_writeWM == _pos.size()) { _writeWM = 0; }
   };
 
   void commit_read() {
@@ -101,13 +100,13 @@ struct spscq {
 
     ++_readWM;
 
+    if (_readWM == _pos.size()) { _readWM = 0; }
+
     if (_readWM == _writeWM) {
       _readWM = curr;
       // std::println("SC Committed read: R {} W {}", _readWM, _writeWM);
       return;
     }
-
-    if (_readWM == _pos.size()) { _readWM = 0; }
 
     // std::println("Committed read: R {} W {}", _readWM, _writeWM);
   };
@@ -125,6 +124,6 @@ struct spscq {
  private:
   size_t _readWM{0};
   size_t _writeWM{0};
-  std::array<std::byte, CAP> _data;
-  std::array<size_t, CAP / MIN> _pos{};
+  std::vector<std::byte> _data;  // CAP
+  std::vector<size_t> _pos;      // CAP / MIN
 };
