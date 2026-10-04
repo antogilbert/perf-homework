@@ -1,13 +1,9 @@
 BasedOnStyle: Google
-Language: Cpp
-Standard: Cpp11
-BreakTemplateDeclaration: Yes
-ColumnLimit: 100
+UseTab: Never
 AllowShortBlocksOnASingleLine: true
-AllowShortCompoundRequirementOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
-AllowShortLambdasOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
-AllowShortRecordOnASingleLine: true
-
+ColumnLimit: 100
+LineEnding: LF
