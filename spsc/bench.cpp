@@ -42,7 +42,7 @@ static void BM_spsc(benchmark::State& state) {
   std::mt19937 rng(dev());
   std::uniform_int_distribution<uint8_t> dist(0, 4);
   for (auto _ : state) {
-    int ops = state.range(0);
+    auto ops = state.range(0);
     for (int i = 0; i < ops; i += RATIO) {
       benchmark::DoNotOptimize(BOOS.data());
       q.write({BOOS.size(), reinterpret_cast<const std::byte*>(BOOS.data())});
@@ -69,7 +69,10 @@ BENCHMARK(BM_spsc)
     ->Arg(1 << 20)
     ->Arg(1 << 22)
     ->Arg(1 << 24)
-    ->Arg(1 << 26);  // this segfaults
+    ->Arg(1 << 26)
+    ->Arg(1 << 28);
+// ->Arg(1 << 30)
+// ->Arg(1 << 31);
 
 // Run the benchmark
 BENCHMARK_MAIN();
