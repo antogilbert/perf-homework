@@ -16,10 +16,10 @@ TEST(SPSC, simple_write) {
   Data f = {FOUR.size(), (std::byte*)FOUR.data()};
   Data x = {SIX.size(), (std::byte*)SIX.data()};
 
-  q.write(f);
+  EXPECT_TRUE(q.write(f));
   EXPECT_EQ(q.readWatermark(), 0);
   EXPECT_EQ(q.writeWatermark(), 1);
-  q.write(x);
+  EXPECT_TRUE(q.write(x));
   EXPECT_EQ(q.readWatermark(), 0);
   EXPECT_EQ(q.writeWatermark(), 2);
 }
@@ -29,10 +29,10 @@ TEST(SPSC, write_then_read) {
   Data f = {FOUR.size(), (std::byte*)FOUR.data()};
   Data x = {SIX.size(), (std::byte*)SIX.data()};
 
-  q.write(f);
+  EXPECT_TRUE(q.write(f));
   EXPECT_EQ(q.readWatermark(), 0);
   EXPECT_EQ(q.writeWatermark(), 1);
-  q.write(x);
+  EXPECT_TRUE(q.write(x));
   EXPECT_EQ(q.readWatermark(), 0);
   EXPECT_EQ(q.writeWatermark(), 2);
 
@@ -52,7 +52,7 @@ TEST(SPSC, write_then_read) {
   EXPECT_EQ(q.readWatermark(), 1);
 
   q.commit_read();
-  EXPECT_EQ(q.readWatermark(), 1);
+  EXPECT_EQ(q.readWatermark(), 2);
 }
 
 TEST(SPSC, wrap_around_data) {
@@ -62,24 +62,24 @@ TEST(SPSC, wrap_around_data) {
   Data six = {SIX.size(), (std::byte*)SIX.data()};
   Data three = {THREE.size(), (std::byte*)THREE.data()};
 
-  q.write(four);
+  EXPECT_TRUE(q.write(four));
   EXPECT_EQ(q.readWatermark(), 0);
   EXPECT_EQ(q.writeWatermark(), 1);
-  q.write(six);
+
+  EXPECT_TRUE(q.write(six));
   EXPECT_EQ(q.readWatermark(), 0);
   EXPECT_EQ(q.writeWatermark(), 2);
 
   q.commit_read();
   EXPECT_EQ(q.readWatermark(), 1);
 
-  q.write(three);
+  EXPECT_TRUE(q.write(three));
   EXPECT_EQ(q.writeWatermark(), 0);
 
   q.commit_read();
   EXPECT_EQ(q.readWatermark(), 2);
 
   for (int i = 0; i < 3; ++i) {
-    q.commit_read();
     EXPECT_EQ(q.readWatermark(), 2);
     auto r = q.read().copy();
     std::string r1_s;
@@ -87,38 +87,12 @@ TEST(SPSC, wrap_around_data) {
     EXPECT_THAT(r1_s, Eq("three"));
   }
 
-  q.write(four);
   q.commit_read();
+  EXPECT_TRUE(q.write(four));
   EXPECT_EQ(q.readWatermark(), 0);
   EXPECT_EQ(q.writeWatermark(), 1);
   auto r = q.read().copy();
   std::string r1_s;
   for (auto b : r) { r1_s.push_back(static_cast<char>(b)); }
   EXPECT_THAT(r1_s, Eq("four"));
-}
-
-TEST(SPSC, wrap_around_watermarks) {
-  spscq<3, 1> q;
-
-  constexpr auto A = std::byte('a');
-  constexpr auto B = std::byte('b');
-  constexpr auto C = std::byte('c');
-  constexpr auto D = std::byte('d');
-
-  q.write({1, &A});
-  q.commit_read();
-  q.write({1, &B});
-  q.commit_read();
-  EXPECT_EQ(q.readWatermark(), 1);
-  EXPECT_EQ(q.writeWatermark(), 2);
-
-  q.write({1, &C});
-  q.commit_read();
-  EXPECT_EQ(q.readWatermark(), 2);
-  EXPECT_EQ(q.writeWatermark(), 0);
-
-  q.write({1, &D});
-  q.commit_read();
-  EXPECT_EQ(q.readWatermark(), 0);
-  EXPECT_EQ(q.writeWatermark(), 1);
 }

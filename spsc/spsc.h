@@ -35,8 +35,8 @@ struct Frame {
 
  private:
   size_t data_len;
-  size_t wrap_len;
   std::byte* data;
+  size_t wrap_len;
   std::byte* data_wrap;
 };
 
@@ -46,6 +46,8 @@ struct spscq {
   explicit spscq() : _data(CAP), _pos(CAP / MIN) {}
 
   Frame read() {
+    if (_readWM == _writeWM) { return Frame(0, nullptr); }
+
     auto frame_start = _readWM == 0 ? _pos.back() : _pos[_readWM - 1];
     auto frame_end = _pos[_readWM];
 
@@ -69,9 +71,14 @@ struct spscq {
     return f;
   }
 
-  // TODO: Handle the case in which the write WM loops back to the readWM
-  // or let it overwrite?
-  void write(Data f) {
+  bool write(Data f) {
+    auto nextWM = (_writeWM + 1) % _pos.size();
+
+    // Sacrifice one frame to ensure we can reliably say the queue is full
+    if (nextWM == _readWM) return false;
+
+    // TODO: check that the new data won't corrupt existing data in case the queue is approaching
+    // full state
     auto frame_start = _writeWM == 0 ? _pos.back() : _pos[_writeWM - 1];
     auto remaining = _data.size() - frame_start;
     // std::println("remaining {}", remaining);
@@ -90,25 +97,14 @@ struct spscq {
       _pos[_writeWM] = f.len - remaining;
     }
 
-    ++_writeWM;
-    if (_writeWM == _pos.size()) { _writeWM = 0; }
+    _writeWM = nextWM;
+    return true;
   };
 
   void commit_read() {
-    auto curr = _readWM;
-    // std::println("Committing read: R {} W {}", _readWM, _writeWM);
+    if (_readWM == _writeWM) return;
 
-    ++_readWM;
-
-    if (_readWM == _pos.size()) { _readWM = 0; }
-
-    if (_readWM == _writeWM) {
-      _readWM = curr;
-      // std::println("SC Committed read: R {} W {}", _readWM, _writeWM);
-      return;
-    }
-
-    // std::println("Committed read: R {} W {}", _readWM, _writeWM);
+    _readWM = (_readWM + 1) % _pos.size();
   };
 
   void print() {
