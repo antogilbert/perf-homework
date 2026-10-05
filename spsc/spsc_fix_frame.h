@@ -1,9 +1,11 @@
+#pragma once
+
 #include <cstddef>
 #include <cstring>
-#include <optional>
 #include <vector>
 
-constexpr size_t KB = 1024;
+#include "consts.h"
+
 constexpr size_t FRAME_SIZE = 2 * KB;
 
 using Bytes = std::vector<std::byte>;
@@ -13,28 +15,35 @@ struct FixedFrame {
   std::byte data[FRAME_SIZE];
 };
 
-struct Handle {
-  size_t len;
-  size_t offset;
-};
-
 template <size_t CAP>
 struct spscffq {
+  struct Handle {
+    ~Handle() {
+      if (frame) q.commit_read();
+    }
+
+    FixedFrame copy() { return *frame; }
+
+   private:
+    FixedFrame* frame;
+    spscffq& q;
+  };
+
   explicit spscffq() : _data(CAP) {}
 
-  FixedFrame* read() {
+  FixedFrame* peek() {
     if (_readWM == _writeWM) { return nullptr; }
 
     return &_data[_readWM];
   }
 
-  bool write(FixedFrame data) {
+  bool write(const FixedFrame& data) {
     auto nextWM = (_writeWM + 1) % _data.size();
 
     // Sacrifice one frame to ensure we can reliably say the queue is full
     if (nextWM == _readWM) return false;
 
-    _data[_writeWM] = std::move(data);
+    _data[_writeWM] = data;
 
     _writeWM = nextWM;
     return true;

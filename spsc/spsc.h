@@ -1,7 +1,11 @@
+#pragma once
+
 #include <cstddef>
 #include <cstring>
 #include <print>
 #include <vector>
+
+#include "consts.h"
 
 using Bytes = std::vector<std::byte>;
 void print_bytes(const Bytes& bs);
@@ -11,6 +15,7 @@ struct Data {
   const std::byte* data;
 };
 
+// TODO: Consider making it RAII with ref to Q so it can commit read upon destruction
 struct Frame {
   Frame() = delete;
   Frame(size_t len, std::byte* data) : data_len(len), wrap_len(0), data(data), data_wrap(nullptr) {}
@@ -37,12 +42,13 @@ struct Frame {
   std::byte* data_wrap;
 };
 
-template <size_t CAP, size_t MIN>
+template <size_t CAP>
 struct spscq {
-  static_assert(CAP % MIN == 0);
-  explicit spscq() : _data(CAP), _pos(CAP / MIN) {}
+  // static_assert(CAP % MIN == 0);
+  explicit spscq() : _data(CAP * MIN_TASK_SIZE), _pos(CAP) {}
+  explicit spscq(size_t taskSize) : _data(CAP * taskSize), _pos(CAP) {}
 
-  Frame read() {
+  Frame peek() {
     if (_readWM == _writeWM) { return Frame(0, nullptr); }
 
     auto frame_start = _readWM == 0 ? _pos.back() : _pos[_readWM - 1];

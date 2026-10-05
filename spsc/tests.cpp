@@ -13,7 +13,7 @@ static constexpr std::string_view SIX = "six";
 using namespace ::testing;
 
 TEST(SPSC, simple_write) {
-  spscq<9, 3> q;
+  spscq<3> q(3);
   Data f = {FOUR.size(), (std::byte*)FOUR.data()};
   Data x = {SIX.size(), (std::byte*)SIX.data()};
 
@@ -26,7 +26,7 @@ TEST(SPSC, simple_write) {
 }
 
 TEST(SPSC, write_then_read) {
-  spscq<9, 3> q;
+  spscq<3> q(3);
   Data f = {FOUR.size(), (std::byte*)FOUR.data()};
   Data x = {SIX.size(), (std::byte*)SIX.data()};
 
@@ -38,7 +38,7 @@ TEST(SPSC, write_then_read) {
   EXPECT_EQ(q.writeWatermark(), 2);
 
   for (int i = 0; i < 2; ++i) {
-    auto r1 = q.read().copy();
+    auto r1 = q.peek().copy();
     EXPECT_EQ(q.readWatermark(), 0);
     EXPECT_EQ(r1.size(), FOUR.size());
     std::string r1_s;
@@ -49,7 +49,7 @@ TEST(SPSC, write_then_read) {
   q.commit_read();
   EXPECT_EQ(q.readWatermark(), 1);
 
-  auto r2 = q.read().copy();
+  auto r2 = q.peek().copy();
   EXPECT_EQ(q.readWatermark(), 1);
 
   q.commit_read();
@@ -57,7 +57,7 @@ TEST(SPSC, write_then_read) {
 }
 
 TEST(SPSC, wrap_around_data) {
-  spscq<9, 3> q;
+  spscq<3> q(3);
 
   Data four = {FOUR.size(), (std::byte*)FOUR.data()};
   Data six = {SIX.size(), (std::byte*)SIX.data()};
@@ -82,7 +82,7 @@ TEST(SPSC, wrap_around_data) {
 
   for (int i = 0; i < 3; ++i) {
     EXPECT_EQ(q.readWatermark(), 2);
-    auto r = q.read().copy();
+    auto r = q.peek().copy();
     std::string r1_s;
     for (auto b : r) { r1_s.push_back(static_cast<char>(b)); }
     EXPECT_THAT(r1_s, Eq("three"));
@@ -92,7 +92,7 @@ TEST(SPSC, wrap_around_data) {
   EXPECT_TRUE(q.write(four));
   EXPECT_EQ(q.readWatermark(), 0);
   EXPECT_EQ(q.writeWatermark(), 1);
-  auto r = q.read().copy();
+  auto r = q.peek().copy();
   std::string r1_s;
   for (auto b : r) { r1_s.push_back(static_cast<char>(b)); }
   EXPECT_THAT(r1_s, Eq("four"));
@@ -130,7 +130,7 @@ TEST(SPSCFF, write_then_read) {
   EXPECT_EQ(q.writeWatermark(), 2);
 
   for (int i = 0; i < 2; ++i) {
-    auto r1 = *q.read();
+    auto r1 = *q.peek();
     EXPECT_EQ(q.readWatermark(), 0);
     std::string r1_s;
     for (auto b : r1.data) { r1_s.push_back(static_cast<char>(b)); }
@@ -142,7 +142,7 @@ TEST(SPSCFF, write_then_read) {
   q.commit_read();
   EXPECT_EQ(q.readWatermark(), 1);
 
-  auto r2 = q.read();
+  auto r2 = q.peek();
   EXPECT_EQ(q.readWatermark(), 1);
 
   q.commit_read();
@@ -178,7 +178,7 @@ TEST(SPSCFF, wrap_around_data) {
 
   for (int i = 0; i < 3; ++i) {
     EXPECT_EQ(q.readWatermark(), 2);
-    auto r = *q.read();
+    auto r = *q.peek();
     std::string r1_s;
     for (auto b : r.data) { r1_s.push_back(static_cast<char>(b)); }
     EXPECT_THAT(r1_s.find_first_of("three"), Eq(0));
@@ -190,7 +190,7 @@ TEST(SPSCFF, wrap_around_data) {
   EXPECT_TRUE(q.write(four));
   EXPECT_EQ(q.readWatermark(), 0);
   EXPECT_EQ(q.writeWatermark(), 1);
-  auto r = *q.read();
+  auto r = *q.peek();
   std::string r1_s;
   for (auto b : r.data) { r1_s.push_back(static_cast<char>(b)); }
   EXPECT_THAT(r1_s.find_first_of("four"), Eq(0));
