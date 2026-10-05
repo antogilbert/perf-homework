@@ -4,6 +4,7 @@
 #include <string>
 
 #include "spsc.h"
+#include "spsc_fix_frame.h"
 
 static constexpr std::string_view THREE = "three";
 static constexpr std::string_view FOUR = "four";
@@ -95,4 +96,104 @@ TEST(SPSC, wrap_around_data) {
   std::string r1_s;
   for (auto b : r) { r1_s.push_back(static_cast<char>(b)); }
   EXPECT_THAT(r1_s, Eq("four"));
+}
+
+// Fixed Frame tests
+
+TEST(SPSCFF, simple_write) {
+  spscffq<3> q;
+  auto f = FixedFrame();
+  auto x = FixedFrame();
+  std::memcpy(&f.data, FOUR.data(), FOUR.size());
+  std::memcpy(&x.data, SIX.data(), SIX.size());
+
+  EXPECT_TRUE(q.write(f));
+  EXPECT_EQ(q.readWatermark(), 0);
+  EXPECT_EQ(q.writeWatermark(), 1);
+  EXPECT_TRUE(q.write(x));
+  EXPECT_EQ(q.readWatermark(), 0);
+  EXPECT_EQ(q.writeWatermark(), 2);
+}
+
+TEST(SPSCFF, write_then_read) {
+  spscffq<3> q;
+  auto f = FixedFrame();
+  auto x = FixedFrame();
+  std::memcpy(&f.data, FOUR.data(), FOUR.size());
+  std::memcpy(&x.data, SIX.data(), SIX.size());
+
+  EXPECT_TRUE(q.write(f));
+  EXPECT_EQ(q.readWatermark(), 0);
+  EXPECT_EQ(q.writeWatermark(), 1);
+  EXPECT_TRUE(q.write(x));
+  EXPECT_EQ(q.readWatermark(), 0);
+  EXPECT_EQ(q.writeWatermark(), 2);
+
+  for (int i = 0; i < 2; ++i) {
+    auto r1 = *q.read();
+    EXPECT_EQ(q.readWatermark(), 0);
+    std::string r1_s;
+    for (auto b : r1.data) { r1_s.push_back(static_cast<char>(b)); }
+    EXPECT_THAT(r1_s.find_first_of("four"), Eq(0));
+    EXPECT_THAT(r1_s.find_last_of("four"), Eq(3));
+    EXPECT_THAT(r1_s.size(), Eq(FRAME_SIZE));
+  }
+
+  q.commit_read();
+  EXPECT_EQ(q.readWatermark(), 1);
+
+  auto r2 = q.read();
+  EXPECT_EQ(q.readWatermark(), 1);
+
+  q.commit_read();
+  EXPECT_EQ(q.readWatermark(), 2);
+}
+
+TEST(SPSCFF, wrap_around_data) {
+  spscffq<3> q;
+
+  auto four = FixedFrame();
+  auto six = FixedFrame();
+  auto three = FixedFrame();
+  std::memcpy(&four.data, FOUR.data(), FOUR.size());
+  std::memcpy(&six.data, SIX.data(), SIX.size());
+  std::memcpy(&three.data, THREE.data(), THREE.size());
+
+  EXPECT_TRUE(q.write(four));
+  EXPECT_EQ(q.readWatermark(), 0);
+  EXPECT_EQ(q.writeWatermark(), 1);
+
+  EXPECT_TRUE(q.write(six));
+  EXPECT_EQ(q.readWatermark(), 0);
+  EXPECT_EQ(q.writeWatermark(), 2);
+
+  q.commit_read();
+  EXPECT_EQ(q.readWatermark(), 1);
+
+  EXPECT_TRUE(q.write(three));
+  EXPECT_EQ(q.writeWatermark(), 0);
+
+  q.commit_read();
+  EXPECT_EQ(q.readWatermark(), 2);
+
+  for (int i = 0; i < 3; ++i) {
+    EXPECT_EQ(q.readWatermark(), 2);
+    auto r = *q.read();
+    std::string r1_s;
+    for (auto b : r.data) { r1_s.push_back(static_cast<char>(b)); }
+    EXPECT_THAT(r1_s.find_first_of("three"), Eq(0));
+    EXPECT_THAT(r1_s.find_last_of("three"), Eq(4));
+    EXPECT_THAT(r1_s.size(), Eq(FRAME_SIZE));
+  }
+
+  q.commit_read();
+  EXPECT_TRUE(q.write(four));
+  EXPECT_EQ(q.readWatermark(), 0);
+  EXPECT_EQ(q.writeWatermark(), 1);
+  auto r = *q.read();
+  std::string r1_s;
+  for (auto b : r.data) { r1_s.push_back(static_cast<char>(b)); }
+  EXPECT_THAT(r1_s.find_first_of("four"), Eq(0));
+  EXPECT_THAT(r1_s.find_last_of("four"), Eq(3));
+  EXPECT_THAT(r1_s.size(), Eq(FRAME_SIZE));
 }
